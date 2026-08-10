@@ -1518,7 +1518,7 @@ std::optional<std::string> to_everest_ocpp_version(const ocpp::OcppProtocolVersi
 }
 
 types::ocpp::ConnectionStatus
-to_everest_connection_status(const bool is_connected, const std::optional<int32_t> configuration_slot,
+to_everest_connection_status(const bool is_connected, const int32_t configuration_slot,
                              const ocpp::v2::NetworkConnectionProfile& network_connection_profile,
                              const ocpp::OcppProtocolVersion protocol_version) {
     types::ocpp::ConnectionStatus connection_status;
@@ -1532,9 +1532,7 @@ to_everest_connection_status(const bool is_connected, const std::optional<int32_
         connection_status.identity = network_connection_profile.identity.value().get();
     }
     connection_status.ocpp_version = to_everest_ocpp_version(protocol_version);
-    if (configuration_slot.has_value()) {
-        connection_status.configuration_slot = configuration_slot.value();
-    }
+    connection_status.configuration_slot = configuration_slot;
     // OCPP 1.6 fills these fields with synthetic data because they are required, so we don't need to pass them on
     if (protocol_version != ocpp::OcppProtocolVersion::v16) {
         connection_status.ocpp_interface =

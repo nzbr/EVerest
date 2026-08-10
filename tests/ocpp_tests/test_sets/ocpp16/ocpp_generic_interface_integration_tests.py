@@ -761,8 +761,9 @@ class TestOCPP16GenericInterfaceIntegration:
             assert status["identity"]
             assert isinstance(status["security_profile"], int)
             assert status["ocpp_version"] == "1.6"
-            # network connection profiles only exist with OCPP2.x
-            assert "configuration_slot" not in status
+            # the legacy configuration only knows a single connection slot
+            assert status["configuration_slot"] == 1
+            # interface and transport only exist with OCPP2.x
             assert "ocpp_interface" not in status
             assert "ocpp_transport" not in status
 

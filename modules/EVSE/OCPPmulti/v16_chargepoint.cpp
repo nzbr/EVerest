@@ -114,10 +114,10 @@ void ChargePointV16::cb_boot_notification_response(
     m_callbacks_ptr->cb_boot_notification(response);
 }
 
-void ChargePointV16::cb_connection_state_changed(bool is_connected,
+void ChargePointV16::cb_connection_state_changed(bool is_connected, int configuration_slot,
                                                  const ocpp::v2::NetworkConnectionProfile& network_connection_profile) {
     m_callbacks_ptr->cb_connection_state_changed(
-        module::conversions::to_everest_connection_status(is_connected, std::nullopt, network_connection_profile,
+        module::conversions::to_everest_connection_status(is_connected, configuration_slot, network_connection_profile,
                                                           ocpp::OcppProtocolVersion::v16),
         ocpp::OcppProtocolVersion::v16);
 }

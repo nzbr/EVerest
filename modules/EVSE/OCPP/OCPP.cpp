@@ -903,10 +903,11 @@ void OCPP::ready() {
     });
 
     this->charge_point->register_connection_state_changed_callback(
-        [this](const bool is_connected, const ocpp::v2::NetworkConnectionProfile& network_connection_profile) {
+        [this](const bool is_connected, const int configuration_slot,
+               const ocpp::v2::NetworkConnectionProfile& network_connection_profile) {
             this->p_ocpp_generic->publish_connection_status(
                 ocpp_module_common::conversions::to_everest_connection_status(
-                    is_connected, std::nullopt, network_connection_profile, ocpp::OcppProtocolVersion::v16));
+                    is_connected, configuration_slot, network_connection_profile, ocpp::OcppProtocolVersion::v16));
         });
 
     this->charge_point->register_get_15118_ev_certificate_response_callback(

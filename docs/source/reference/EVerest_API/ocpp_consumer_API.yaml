@@ -1618,8 +1618,7 @@ components:
           type: integer
         configuration_slot:
           description: >-
-            Configuration slot of the network connection profile the connection uses
-            (OCPP2.x only)
+            Configuration slot of the network connection profile the connection uses.
           type: integer
         ocpp_interface:
           description: >-

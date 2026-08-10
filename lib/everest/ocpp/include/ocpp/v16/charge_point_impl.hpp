@@ -179,7 +179,8 @@ private:
     std::function<void(const std::string& system_time)> set_system_time_callback;
     std::function<void(const BootNotificationResponse& boot_notification_response)> boot_notification_response_callback;
     std::function<void()> signal_set_charging_profiles_callback;
-    std::function<void(const bool is_connected, const ocpp::v2::NetworkConnectionProfile& network_connection_profile)>
+    std::function<void(const bool is_connected, const int configuration_slot,
+                       const ocpp::v2::NetworkConnectionProfile& network_connection_profile)>
         connection_state_changed_callback;
 
     std::function<GetLogResponse(const GetDiagnosticsRequest& request)> upload_diagnostics_callback;
@@ -908,7 +909,7 @@ public:
     /// connection_state_changed_callback is called when chargepoint has connected to or disconnected from the CSMS.
     /// \param callback
     void register_connection_state_changed_callback(
-        const std::function<void(const bool is_connected,
+        const std::function<void(const bool is_connected, const int configuration_slot,
                                  const ocpp::v2::NetworkConnectionProfile& network_connection_profile)>& callback);
 
     /// \brief registers a \p callback function that can be used to publish the response to a Get15118Certificate.req

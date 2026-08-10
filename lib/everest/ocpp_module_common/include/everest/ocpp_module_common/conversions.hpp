@@ -235,7 +235,7 @@ std::optional<std::string> to_everest_ocpp_version(ocpp::OcppProtocolVersion pro
 
 /// \brief Converts the arguments of a connection state change to a types::ocpp::ConnectionStatus
 types::ocpp::ConnectionStatus
-to_everest_connection_status(bool is_connected, std::optional<int32_t> configuration_slot,
+to_everest_connection_status(bool is_connected, int32_t configuration_slot,
                              const ocpp::v2::NetworkConnectionProfile& network_connection_profile,
                              ocpp::OcppProtocolVersion protocol_version);
 
