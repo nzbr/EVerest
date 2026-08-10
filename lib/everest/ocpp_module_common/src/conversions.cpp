@@ -1503,6 +1503,48 @@ types::ocpp::StatusInfoType to_everest_status_info_type(const ocpp::v2::StatusIn
     return everest_status_info;
 }
 
+std::optional<std::string> to_everest_ocpp_version(const ocpp::OcppProtocolVersion protocol_version) {
+    switch (protocol_version) {
+    case ocpp::OcppProtocolVersion::v16:
+        return "1.6";
+    case ocpp::OcppProtocolVersion::v201:
+        return "2.0.1";
+    case ocpp::OcppProtocolVersion::v21:
+        return "2.1";
+    case ocpp::OcppProtocolVersion::Unknown:
+        break;
+    }
+    return std::nullopt;
+}
+
+types::ocpp::ConnectionStatus
+to_everest_connection_status(const bool is_connected, const std::optional<int32_t> configuration_slot,
+                             const ocpp::v2::NetworkConnectionProfile& network_connection_profile,
+                             const ocpp::OcppProtocolVersion protocol_version) {
+    types::ocpp::ConnectionStatus connection_status;
+    connection_status.connected = is_connected;
+    if (not network_connection_profile.ocppCsmsUrl.get().empty()) {
+        connection_status.csms_url = network_connection_profile.ocppCsmsUrl.get();
+    }
+    connection_status.security_profile = network_connection_profile.securityProfile;
+    if (network_connection_profile.identity.has_value() and
+        not network_connection_profile.identity.value().get().empty()) {
+        connection_status.identity = network_connection_profile.identity.value().get();
+    }
+    connection_status.ocpp_version = to_everest_ocpp_version(protocol_version);
+    if (configuration_slot.has_value()) {
+        connection_status.configuration_slot = configuration_slot.value();
+    }
+    // OCPP 1.6 fills these fields with synthetic data because they are required, so we don't need to pass them on
+    if (protocol_version != ocpp::OcppProtocolVersion::v16) {
+        connection_status.ocpp_interface =
+            ocpp::v2::conversions::ocppinterface_enum_to_string(network_connection_profile.ocppInterface);
+        connection_status.ocpp_transport =
+            ocpp::v2::conversions::ocpptransport_enum_to_string(network_connection_profile.ocppTransport);
+    }
+    return connection_status;
+}
+
 std::vector<types::ocpp::GetVariableResult>
 to_everest_get_variable_result_vector(const std::vector<ocpp::v2::GetVariableResult>& get_variable_result_vector) {
     std::vector<types::ocpp::GetVariableResult> response;

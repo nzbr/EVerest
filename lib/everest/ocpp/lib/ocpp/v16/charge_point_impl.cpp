@@ -311,10 +311,10 @@ std::unique_ptr<ocpp::MessageQueue<v16::MessageType>> ChargePointImpl::create_me
 }
 
 void ChargePointImpl::on_websocket_connected(const int /*configuration_slot*/,
-                                             const ocpp::v2::NetworkConnectionProfile& /*network_connection_profile*/,
+                                             const ocpp::v2::NetworkConnectionProfile& network_connection_profile,
                                              const ocpp::OcppProtocolVersion /*ocpp_version*/) {
     if (this->connection_state_changed_callback != nullptr) {
-        this->connection_state_changed_callback(true);
+        this->connection_state_changed_callback(true, network_connection_profile);
     }
     this->publish_default_price(false);
     this->message_queue->resume(this->message_queue_resume_delay);
@@ -332,10 +332,10 @@ void ChargePointImpl::on_websocket_connected(const int /*configuration_slot*/,
     }
 }
 
-void ChargePointImpl::on_websocket_disconnected(
-    const int /*configuration_slot*/, const ocpp::v2::NetworkConnectionProfile& /*network_connection_profile*/) {
+void ChargePointImpl::on_websocket_disconnected(const int /*configuration_slot*/,
+                                                const ocpp::v2::NetworkConnectionProfile& network_connection_profile) {
     if (this->connection_state_changed_callback != nullptr) {
-        this->connection_state_changed_callback(false);
+        this->connection_state_changed_callback(false, network_connection_profile);
     }
     this->publish_default_price(true);
     this->message_queue->pause();
@@ -4889,7 +4889,8 @@ void ChargePointImpl::register_configure_network_connection_profile_callback(
 }
 
 void ChargePointImpl::register_connection_state_changed_callback(
-    const std::function<void(bool is_connected)>& callback) {
+    const std::function<void(const bool is_connected,
+                             const ocpp::v2::NetworkConnectionProfile& network_connection_profile)>& callback) {
     this->connection_state_changed_callback = callback;
 }
 

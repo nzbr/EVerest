@@ -85,6 +85,27 @@ async def wait_for_mock_called(mock, call=None, timeout=10):
     await asyncio.wait_for(_await_called(), timeout=timeout)
 
 
+async def wait_for_mock_call_matching(mock, predicate, timeout=10):
+    """Waits for a call whose single argument satisfies predicate and returns that argument."""
+
+    def _matching_argument():
+        return next(
+            (
+                call.args[0]
+                for call in mock.mock_calls
+                if call.args and predicate(call.args[0])
+            ),
+            None,
+        )
+
+    async def _await_called():
+        while _matching_argument() is None:
+            await asyncio.sleep(0.1)
+
+    await asyncio.wait_for(_await_called(), timeout=timeout)
+    return _matching_argument()
+
+
 async def wait_for_connection_state(csms_connection, connected, timeout=15):
     async def _await_state():
         while csms_connection.is_connected != connected:
@@ -718,16 +739,32 @@ class TestOCPP16GenericInterfaceIntegration:
             ),
         )
 
-    async def test_subscribe_is_connected(self, _env):
+    async def test_subscribe_connection_status(self, _env):
         subscription_mock = Mock()
         _env.probe_module.subscribe_variable(
-            "ocpp", "is_connected", subscription_mock)
+            "ocpp", "connection_status", subscription_mock)
 
         assert await _env.probe_module.call_command("ocpp", "stop", None)
         assert await _env.probe_module.call_command("ocpp", "restart", None)
 
-        await wait_for_mock_called(subscription_mock, mock_call(False))
-        await wait_for_mock_called(subscription_mock, mock_call(True))
+        disconnected = await wait_for_mock_call_matching(
+            subscription_mock, lambda status: status["connected"] is False
+        )
+        connected = await wait_for_mock_call_matching(
+            subscription_mock, lambda status: status["connected"] is True
+        )
+
+        # OCPP1.6 reports the details it has: the CSMS endpoint, the identity used
+        # towards it and the security profile of the connection.
+        for status in (connected, disconnected):
+            assert status["csms_url"]
+            assert status["identity"]
+            assert isinstance(status["security_profile"], int)
+            assert status["ocpp_version"] == "1.6"
+            # network connection profiles only exist with OCPP2.x
+            assert "configuration_slot" not in status
+            assert "ocpp_interface" not in status
+            assert "ocpp_transport" not in status
 
     @pytest.mark.parametrize(
         "overwrite_implementation",

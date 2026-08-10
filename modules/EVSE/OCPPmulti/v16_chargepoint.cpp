@@ -114,8 +114,12 @@ void ChargePointV16::cb_boot_notification_response(
     m_callbacks_ptr->cb_boot_notification(response);
 }
 
-void ChargePointV16::cb_connection_state_changed(bool is_connected) {
-    m_callbacks_ptr->cb_connection_state_changed(is_connected, ocpp::OcppProtocolVersion::v16);
+void ChargePointV16::cb_connection_state_changed(bool is_connected,
+                                                 const ocpp::v2::NetworkConnectionProfile& network_connection_profile) {
+    m_callbacks_ptr->cb_connection_state_changed(
+        module::conversions::to_everest_connection_status(is_connected, std::nullopt, network_connection_profile,
+                                                          ocpp::OcppProtocolVersion::v16),
+        ocpp::OcppProtocolVersion::v16);
 }
 
 ocpp::v16::DataTransferResponse ChargePointV16::cb_data_transfer(const ocpp::v16::DataTransferRequest& request) {
