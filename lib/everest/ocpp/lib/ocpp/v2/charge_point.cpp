@@ -165,8 +165,14 @@ void ChargePoint::stop() {
     this->provisioning->stop_bootnotification_timer();
     this->connectivity_manager->disconnect();
     // Disarm before tearing down the message queue: a late websocket-thread disconnect callback
-    // must not reach into members being destroyed.
-    this->connectivity_manager->disarm_connection_callbacks();
+    // must not reach into members being destroyed. disconnect() only initiates the close, so that
+    // suppressed callback would have been the one telling consumers the connection went away:
+    // report it here instead. Only the notification is replayed, not the rest of
+    // on_websocket_disconnected(): the timers and the message queue it would touch are torn down
+    // by this very function anyway.
+    if (this->connectivity_manager->disarm_connection_callbacks()) {
+        this->notify_connection_state_changed_disconnected();
+    }
     this->security->stop_certificate_expiration_check_timers();
     this->diagnostics->stop_monitoring();
     this->message_queue->stop();
@@ -1261,6 +1267,23 @@ void ChargePoint::on_websocket_connected(const int configuration_slot,
     if (this->tariff_and_cost != nullptr) {
         this->tariff_and_cost->publish_default_price(true);
     }
+}
+
+void ChargePoint::notify_connection_state_changed_disconnected() {
+    if (!this->callbacks.connection_state_changed_callback.has_value()) {
+        return;
+    }
+    const auto configuration_slot = this->connectivity_manager->get_active_network_configuration_slot();
+    if (!configuration_slot.has_value()) {
+        return;
+    }
+    const auto network_connection_profile =
+        this->connectivity_manager->get_network_connection_profile(configuration_slot.value());
+    if (!network_connection_profile.has_value()) {
+        return;
+    }
+    this->callbacks.connection_state_changed_callback.value()(false, configuration_slot.value(),
+                                                              network_connection_profile.value(), this->ocpp_version);
 }
 
 void ChargePoint::on_websocket_disconnected(const int configuration_slot,

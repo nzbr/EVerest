@@ -231,9 +231,16 @@ void ConnectivityManager::disconnect() {
     }
 }
 
-void ConnectivityManager::disarm_connection_callbacks() {
+bool ConnectivityManager::disarm_connection_callbacks() {
     std::lock_guard<std::mutex> lock(this->connection_callbacks_mutex);
+    // reported_as_connected is the exactly-once token for the final disconnect notification: it is
+    // only set once a connected notification was delivered, and whichever path reports the
+    // disconnect first clears it. Taking it under the same lock that sets the disarmed flag is what
+    // makes the hand-off race-free against a websocket-thread disconnect arriving right now.
+    const bool disconnect_notification_owed = this->reported_as_connected and !this->connection_callbacks_disarmed;
+    this->reported_as_connected = false;
     this->connection_callbacks_disarmed = true;
+    return disconnect_notification_owed;
 }
 
 void ConnectivityManager::arm_connection_callbacks() {
@@ -525,6 +532,7 @@ void ConnectivityManager::on_websocket_connected(OcppProtocolVersion protocol) {
             network_connection_profile.has_value()) {
             this->websocket_connected_callback.value()(
                 actual_configuration_slot.value(), network_connection_profile.value(), this->connected_ocpp_version);
+            this->reported_as_connected = true;
         }
     }
     this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
@@ -559,6 +567,7 @@ void ConnectivityManager::on_websocket_disconnected() {
         network_connection_profile.has_value()) {
         this->websocket_disconnected_callback.value()(actual_configuration_slot.value(),
                                                       network_connection_profile.value(), this->connected_ocpp_version);
+        this->reported_as_connected = false;
     }
 }
 
