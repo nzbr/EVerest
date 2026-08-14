@@ -744,20 +744,26 @@ class TestOCPP16GenericInterfaceIntegration:
         _env.probe_module.subscribe_variable(
             "ocpp", "connection_status", subscription_mock)
 
+        # Await the disconnect before restarting
         assert await _env.probe_module.call_command("ocpp", "stop", None)
-        assert await _env.probe_module.call_command("ocpp", "restart", None)
+        disconnected = await wait_for_mock_call_matching(
+            subscription_mock, lambda status: status["connected"] is False
+        )
 
-        status = await wait_for_mock_call_matching(
+        assert await _env.probe_module.call_command("ocpp", "restart", None)
+        connected = await wait_for_mock_call_matching(
             subscription_mock, lambda status: status["connected"] is True
         )
 
-        assert status["csms_url"]
-        assert status["identity"]
-        assert isinstance(status["security_profile"], int)
-        assert status["ocpp_version"] == "1.6"
-        assert isinstance(status["configuration_slot"], int)
-        assert status["ocpp_interface"]
-        assert status["ocpp_transport"]
+
+        for status in (connected, disconnected):
+            assert status["csms_url"]
+            assert status["identity"]
+            assert isinstance(status["security_profile"], int)
+            assert status["ocpp_version"] == "1.6"
+            assert isinstance(status["configuration_slot"], int)
+            assert status["ocpp_interface"]
+            assert status["ocpp_transport"]
 
     @pytest.mark.parametrize(
         "overwrite_implementation",
