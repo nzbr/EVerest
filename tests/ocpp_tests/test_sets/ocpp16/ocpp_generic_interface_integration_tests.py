@@ -744,12 +744,13 @@ class TestOCPP16GenericInterfaceIntegration:
         _env.probe_module.subscribe_variable(
             "ocpp", "connection_status", subscription_mock)
 
+        # Await the disconnect before restarting
         assert await _env.probe_module.call_command("ocpp", "stop", None)
-        assert await _env.probe_module.call_command("ocpp", "restart", None)
-
         disconnected = await wait_for_mock_call_matching(
             subscription_mock, lambda status: status["connected"] is False
         )
+
+        assert await _env.probe_module.call_command("ocpp", "restart", None)
         connected = await wait_for_mock_call_matching(
             subscription_mock, lambda status: status["connected"] is True
         )
