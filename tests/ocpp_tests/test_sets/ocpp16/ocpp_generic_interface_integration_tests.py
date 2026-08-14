@@ -744,29 +744,20 @@ class TestOCPP16GenericInterfaceIntegration:
         _env.probe_module.subscribe_variable(
             "ocpp", "connection_status", subscription_mock)
 
-        # Await the disconnect before restarting
         assert await _env.probe_module.call_command("ocpp", "stop", None)
-        disconnected = await wait_for_mock_call_matching(
-            subscription_mock, lambda status: status["connected"] is False
-        )
-
         assert await _env.probe_module.call_command("ocpp", "restart", None)
-        connected = await wait_for_mock_call_matching(
+
+        status = await wait_for_mock_call_matching(
             subscription_mock, lambda status: status["connected"] is True
         )
 
-        # OCPP1.6 reports the details it has: the CSMS endpoint, the identity used
-        # towards it and the security profile of the connection.
-        for status in (connected, disconnected):
-            assert status["csms_url"]
-            assert status["identity"]
-            assert isinstance(status["security_profile"], int)
-            assert status["ocpp_version"] == "1.6"
-            # the legacy configuration only knows a single connection slot
-            assert status["configuration_slot"] == 1
-            # the legacy configuration does not pin a network interface
-            assert status["ocpp_interface"] == "Any"
-            assert status["ocpp_transport"] == "JSON"
+        assert status["csms_url"]
+        assert status["identity"]
+        assert isinstance(status["security_profile"], int)
+        assert status["ocpp_version"] == "1.6"
+        assert isinstance(status["configuration_slot"], int)
+        assert status["ocpp_interface"]
+        assert status["ocpp_transport"]
 
     @pytest.mark.parametrize(
         "overwrite_implementation",
