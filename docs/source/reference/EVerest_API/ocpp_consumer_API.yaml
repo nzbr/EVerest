@@ -1623,12 +1623,10 @@ components:
         ocpp_interface:
           description: >-
             Network interface of the network connection profile the connection uses
-            (OCPP2.x ocppInterface, e.g. Wired0 or Wireless1)
           type: string
         ocpp_transport:
           description: >-
             Transport of the network connection profile the connection uses
-            (OCPP2.x ocppTransport, e.g. JSON)
           type: string
         ocpp_version:
           description: >-

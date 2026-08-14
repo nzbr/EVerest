@@ -1533,13 +1533,10 @@ to_everest_connection_status(const bool is_connected, const int32_t configuratio
     }
     connection_status.ocpp_version = to_everest_ocpp_version(protocol_version);
     connection_status.configuration_slot = configuration_slot;
-    // OCPP 1.6 fills these fields with synthetic data because they are required, so we don't need to pass them on
-    if (protocol_version != ocpp::OcppProtocolVersion::v16) {
-        connection_status.ocpp_interface =
-            ocpp::v2::conversions::ocppinterface_enum_to_string(network_connection_profile.ocppInterface);
-        connection_status.ocpp_transport =
-            ocpp::v2::conversions::ocpptransport_enum_to_string(network_connection_profile.ocppTransport);
-    }
+    connection_status.ocpp_interface =
+        ocpp::v2::conversions::ocppinterface_enum_to_string(network_connection_profile.ocppInterface);
+    connection_status.ocpp_transport =
+        ocpp::v2::conversions::ocpptransport_enum_to_string(network_connection_profile.ocppTransport);
     return connection_status;
 }
 
